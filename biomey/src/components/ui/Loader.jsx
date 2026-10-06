@@ -6,31 +6,17 @@ export default function Loader() {
     return !sessionStorage.getItem('biomey-loaded');
   });
   const [hiding, setHiding] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!visible) return;
 
     sessionStorage.setItem('biomey-loaded', '1');
 
-    // Animación de progreso: 0% → 100% en 1.5 segundos
-    const startTime = Date.now();
-    const duration = 1500;
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const value = Math.min((elapsed / duration) * 100, 100);
-      setProgress(value);
-
-      if (value >= 100) clearInterval(interval);
-    }, 16);
-
-    // Ocultar después de 1.8s (1.5s de progreso + 0.3s de pausa)
-    const hideTimer = setTimeout(() => setHiding(true), 1800);
-    const removeTimer = setTimeout(() => setVisible(false), 2300);
+    // 1.2s visible + 0.3s de fade out = 1.5 segundos total
+    const hideTimer = setTimeout(() => setHiding(true), 1200);
+    const removeTimer = setTimeout(() => setVisible(false), 1500);
 
     return () => {
-      clearInterval(interval);
       clearTimeout(hideTimer);
       clearTimeout(removeTimer);
     };
@@ -38,20 +24,13 @@ export default function Loader() {
 
   if (!visible) return null;
 
-  // Texto según el progreso
-  const statusText =
-    progress < 30 ? 'Iniciando...' :
-    progress < 70 ? 'Cargando recursos...' :
-    progress < 100 ? 'Casi listo...' :
-    '¡Bienvenido!';
-
   return (
     <div
       className={`
         fixed inset-0 z-[100]
         flex items-center justify-center
         bg-background
-        transition-all duration-500 ease-out
+        transition-opacity duration-300 ease-out
         ${hiding ? 'opacity-0 pointer-events-none' : 'opacity-100'}
       `}
       aria-hidden="true"
@@ -72,7 +51,7 @@ export default function Loader() {
 
       <div className="relative flex flex-col items-center gap-10 w-full max-w-sm px-6">
 
-        {/* Logo + Nombre MÁS GRANDES */}
+        {/* Logo + Nombre */}
         <div className="flex items-center gap-4">
           <div className="biomey-logo-icon !w-20 !h-20 md:!w-24 md:!h-24">
             <img 
@@ -86,33 +65,24 @@ export default function Loader() {
           </span>
         </div>
 
-        {/* Barra de progreso */}
+        {/* Barra de progreso - 100% CSS, ultra fluida */}
         <div className="w-full">
-          <div className="flex items-center justify-between mb-2 text-xs">
-            <span className="text-muted tracking-wider uppercase">
-              {statusText}
-            </span>
-            <span className="text-foreground font-bold tabular-nums">
-              {Math.round(progress)}%
-            </span>
-          </div>
-
           <div className="relative w-full h-1.5 rounded-full bg-border overflow-hidden">
             <div
-              className="absolute inset-y-0 left-0 bg-accent rounded-full"
-              style={{
-                width: `${progress}%`,
-                transition: 'width 0.1s linear',
-              }}
+              className="
+                absolute inset-y-0 left-0 w-full
+                bg-accent rounded-full
+                origin-left
+                animate-progress-bar
+              "
+              style={{ willChange: 'transform' }}
             />
           </div>
-        </div>
 
-        {/* Puntos animados */}
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '0ms' }} />
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '200ms' }} />
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '400ms' }} />
+          {/* Texto debajo */}
+          <p className="text-center text-xs text-muted tracking-widest uppercase mt-4 animate-pulse">
+            Cargando
+          </p>
         </div>
 
       </div>

@@ -37,7 +37,8 @@ export default {
         'float': 'float 6s ease-in-out infinite',
         'border-spin': 'borderSpin 4s linear infinite',
         'loader-bar': 'loaderBar 1.2s ease-in-out forwards',
-        'blink': 'blink 0.8s ease-in-out infinite', // 👈 AÑADIDO
+        'blink': 'blink 0.8s ease-in-out infinite',
+        'progress-bar': 'progressBar 1.5s ease-out forwards', // 👈 AÑADIDO
       },
       keyframes: {
         fadeIn: {
@@ -60,9 +61,13 @@ export default {
           '0%': { width: '0%' },
           '100%': { width: '100%' },
         },
-        blink: { // 👈 AÑADIDO
+        blink: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0' },
+        },
+        progressBar: { // 👈 AÑADIDO
+          '0%': { transform: 'scaleX(0)' },
+          '100%': { transform: 'scaleX(1)' },
         },
       },
     },
