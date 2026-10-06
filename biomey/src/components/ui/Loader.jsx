@@ -7,39 +7,30 @@ export default function Loader() {
   });
   const [hiding, setHiding] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('Cargando...');
 
   useEffect(() => {
     if (!visible) return;
 
     sessionStorage.setItem('biomey-loaded', '1');
 
-    // 1. Animación de la barra de progreso (0 a 100 en 4 segundos)
+    // Animación de progreso: 0% → 100% en 1.5 segundos
     const startTime = Date.now();
-    const duration = 4000; // 4 segundos
+    const duration = 1500;
 
-    const progressInterval = setInterval(() => {
+    const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const newProgress = Math.min((elapsed / duration) * 100, 100);
-      setProgress(newProgress);
+      const value = Math.min((elapsed / duration) * 100, 100);
+      setProgress(value);
 
-      // Cambiar el texto según el progreso
-      if (newProgress < 30) setStatusText('Cargando...');
-      else if (newProgress < 70) setStatusText('Preparando experiencia...');
-      else if (newProgress < 100) setStatusText('Casi listo...');
-      else setStatusText('¡Bienvenido!');
+      if (value >= 100) clearInterval(interval);
+    }, 16);
 
-      if (newProgress >= 100) {
-        clearInterval(progressInterval);
-      }
-    }, 50);
-
-    // 2. Temporizador para ocultar el loader (4s + 0.8s de fade out)
-    const hideTimer = setTimeout(() => setHiding(true), 4000);
-    const removeTimer = setTimeout(() => setVisible(false), 4800);
+    // Ocultar después de 1.8s (1.5s de progreso + 0.3s de pausa)
+    const hideTimer = setTimeout(() => setHiding(true), 1800);
+    const removeTimer = setTimeout(() => setVisible(false), 2300);
 
     return () => {
-      clearInterval(progressInterval);
+      clearInterval(interval);
       clearTimeout(hideTimer);
       clearTimeout(removeTimer);
     };
@@ -47,10 +38,12 @@ export default function Loader() {
 
   if (!visible) return null;
 
-  // Cálculo del círculo SVG
-  const radius = 60;
-  const circumference = 2 * Math.PI * radius; // ~377
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  // Texto según el progreso
+  const statusText =
+    progress < 30 ? 'Iniciando...' :
+    progress < 70 ? 'Cargando recursos...' :
+    progress < 100 ? 'Casi listo...' :
+    '¡Bienvenido!';
 
   return (
     <div
@@ -58,70 +51,70 @@ export default function Loader() {
         fixed inset-0 z-[100]
         flex items-center justify-center
         bg-background
-        transition-all duration-700 ease-out
-        ${hiding ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'}
+        transition-all duration-500 ease-out
+        ${hiding ? 'opacity-0 pointer-events-none' : 'opacity-100'}
       `}
       aria-hidden="true"
     >
       {/* Fondo con degradado sutil */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-surface opacity-60" />
 
-      <div className="relative flex flex-col items-center gap-8">
+      {/* Grid sutil */}
+      <div
+        className="
+          absolute inset-0
+          [background-image:linear-gradient(to_right,rgb(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--border))_1px,transparent_1px)]
+          [background-size:48px_48px]
+          [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_40%,transparent_100%)]
+          opacity-30
+        "
+      />
 
-        {/* Contenedor del Logo con Anillo de Progreso */}
-        <div className="relative flex items-center justify-center w-40 h-40">
+      <div className="relative flex flex-col items-center gap-10 w-full max-w-sm px-6">
 
-          {/* Anillo de progreso SVG */}
-          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 140 140">
-            {/* Círculo de fondo */}
-            <circle
-              cx="70"
-              cy="70"
-              r={radius}
-              fill="none"
-              stroke="rgb(var(--border))"
-              strokeWidth="4"
-              className="opacity-30"
+        {/* Logo + Nombre MÁS GRANDES */}
+        <div className="flex items-center gap-4">
+          <div className="biomey-logo-icon !w-20 !h-20 md:!w-24 md:!h-24">
+            <img 
+              src="/logo-biomey.png" 
+              alt="Logo BioMey" 
+              className="w-full h-full object-contain dark:invert"
             />
-            {/* Círculo de progreso */}
-            <circle
-              cx="70"
-              cy="70"
-              r={radius}
-              fill="none"
-              stroke="rgb(var(--accent))"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              className="transition-all duration-100 ease-linear"
-            />
-          </svg>
+          </div>
+          <span className="biomey-logo-text !text-4xl md:!text-5xl">
+            BioMey
+          </span>
+        </div>
 
-          {/* Logo en el centro */}
-          <div className="relative z-10 flex flex-col items-center gap-1">
-            <div className="biomey-logo-icon !w-12 !h-12">
-              <img 
-                src="/logo-biomey.png" 
-                alt="Logo BioMey" 
-                className="w-full h-full object-contain dark:invert"
-              />
-            </div>
-            <span className="biomey-logo-text !text-lg">
-              BioMey
+        {/* Barra de progreso */}
+        <div className="w-full">
+          <div className="flex items-center justify-between mb-2 text-xs">
+            <span className="text-muted tracking-wider uppercase">
+              {statusText}
             </span>
+            <span className="text-foreground font-bold tabular-nums">
+              {Math.round(progress)}%
+            </span>
+          </div>
+
+          <div className="relative w-full h-1.5 rounded-full bg-border overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-accent rounded-full"
+              style={{
+                width: `${progress}%`,
+                transition: 'width 0.1s linear',
+              }}
+            />
           </div>
         </div>
 
-        {/* Porcentaje y texto de estado */}
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-3xl font-bold text-foreground tabular-nums">
-            {Math.round(progress)}%
-          </span>
-          <p className="text-xs text-muted tracking-widest uppercase transition-all duration-300">
-            {statusText}
-          </p>
+        {/* Puntos animados */}
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '0ms' }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '200ms' }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: '400ms' }} />
         </div>
+
       </div>
     </div>
   );
