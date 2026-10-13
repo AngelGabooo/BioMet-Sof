@@ -2,7 +2,7 @@ export const TESTIMONIALS = [
   {
     id: 1,
     name: 'Carlos Méndez',
-    business: 'Abarrotes La Esquina',
+    business: 'Abarrotes La Espiga',
     location: 'Tapachula, Chiapas',
     message:
       'El punto de venta que nos hicieron cambió por completo la forma en que trabajamos. Ahora todo es más rápido y sin errores.',
@@ -11,7 +11,7 @@ export const TESTIMONIALS = [
     id: 2,
     name: 'Ana López',
     business: 'Gimnasio FitZone',
-    location: 'Tapachula, Chiapas',
+    location: 'Villa Comaltitlan, Chiapas',
     message:
       'El sistema de control de miembros es súper fácil de usar. Nuestros clientes y entrenadores lo aman.',
   },
