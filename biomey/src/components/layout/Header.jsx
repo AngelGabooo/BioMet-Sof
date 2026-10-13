@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import ThemeToggle from '../ui/ThemeToggle';
 
@@ -36,7 +36,6 @@ function BioMeyLogo() {
           }
         }
 
-        /* Parpadeo sutil, guiño al Loader */
         @keyframes biomey-header-flick {
           0%, 100% { opacity: 1; }
           45%      { opacity: 1; }
@@ -54,7 +53,6 @@ function BioMeyLogo() {
         }
       `}</style>
 
-      {/* ISOTIPO */}
       <div className="biomey-logo-icon">
         <img
           src="/logo-biomey.png"
@@ -63,7 +61,6 @@ function BioMeyLogo() {
         />
       </div>
 
-      {/* WORDMARK con la fuente del Loader */}
       <span className="biomey-header-text">
         <span className="text-[#171717] dark:text-white">Bio</span>
         <span className="text-[#2563EB] dark:text-[#60a5fa]">Mey</span>
@@ -80,6 +77,9 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // 👇 Saber en qué ruta estamos
+  const { pathname } = useLocation();
 
   /* Detectar scroll: ocultar al bajar, mostrar al subir */
   useEffect(() => {
@@ -136,6 +136,29 @@ export default function Header() {
     setMenuOpen(false);
   };
 
+  /* 👇 Clic en el logo:
+     - Si ya estamos en "/", disparamos el evento global para subir suave.
+     - Si estamos en otra ruta, dejamos que Link navegue normal. */
+  const handleLogoClick = () => {
+    closeMenu();
+
+    if (pathname === '/') {
+      window.dispatchEvent(new Event('biomey:scroll-top'));
+    }
+  };
+
+  /* 👇 Clic en cualquier link de la nav:
+     - Si ya estamos en esa ruta, prevenimos navegación y subimos suave.
+     - Si estamos en otra ruta, dejamos que Link navegue normal. */
+  const handleNavClick = (to) => (e) => {
+    closeMenu();
+
+    if (pathname === to) {
+      e.preventDefault();
+      window.dispatchEvent(new Event('biomey:scroll-top'));
+    }
+  };
+
   return (
     <>
       {/* HEADER */}
@@ -159,7 +182,7 @@ export default function Header() {
             {/* LOGO */}
             <Link
               to="/"
-              onClick={closeMenu}
+              onClick={handleLogoClick}
               className="biomey-logo-link group"
               aria-label="BioMey - Inicio"
             >
@@ -172,6 +195,7 @@ export default function Header() {
                 <Link
                   key={link.to}
                   to={link.to}
+                  onClick={handleNavClick(link.to)}
                   className="
                     px-4 py-2
                     rounded-lg
@@ -198,90 +222,42 @@ export default function Header() {
 
             {/* MÓVIL */}
             <div className="flex md:hidden items-center gap-2">
-              {/* Botón menú */}
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
                 aria-expanded={menuOpen}
                 className="
-                  inline-flex
-                  items-center
-                  justify-center
-
-                  w-10
-                  h-10
-
-                  rounded-xl
-
-                  bg-surface
-                  border
-                  border-border
-
+                  inline-flex items-center justify-center
+                  w-10 h-10 rounded-xl
+                  bg-surface border border-border
                   hover:bg-background
-
                   active:scale-95
-
-                  transition-all
-                  duration-200
+                  transition-all duration-200
                 "
               >
                 <span className="relative w-[22px] h-[18px]">
-                  {/* Línea 1 */}
                   <span
                     className={`
-                      absolute
-                      left-0
-                      w-full
-                      h-[2px]
-
-                      bg-foreground
-                      rounded-full
-
-                      transition-all
-                      duration-300
-                      ease-out
-
+                      absolute left-0 w-full h-[2px]
+                      bg-foreground rounded-full
+                      transition-all duration-300 ease-out
                       ${menuOpen ? 'top-1/2 -translate-y-1/2 rotate-45' : 'top-0'}
                     `}
                   />
-
-                  {/* Línea 2 */}
                   <span
                     className={`
-                      absolute
-                      left-0
-                      top-1/2
-                      -translate-y-1/2
-
-                      w-full
-                      h-[2px]
-
-                      bg-foreground
-                      rounded-full
-
-                      transition-all
-                      duration-200
-                      ease-out
-
+                      absolute left-0 top-1/2 -translate-y-1/2
+                      w-full h-[2px]
+                      bg-foreground rounded-full
+                      transition-all duration-200 ease-out
                       ${menuOpen ? 'opacity-0 scale-x-0' : 'opacity-100 scale-x-100'}
                     `}
                   />
-
-                  {/* Línea 3 */}
                   <span
                     className={`
-                      absolute
-                      left-0
-                      w-full
-                      h-[2px]
-
-                      bg-foreground
-                      rounded-full
-
-                      transition-all
-                      duration-300
-                      ease-out
-
+                      absolute left-0 w-full h-[2px]
+                      bg-foreground rounded-full
+                      transition-all duration-300 ease-out
                       ${menuOpen ? 'bottom-1/2 translate-y-1/2 -rotate-45' : 'bottom-0'}
                     `}
                   />
@@ -298,58 +274,33 @@ export default function Header() {
         id="mobile-menu"
         aria-hidden={!menuOpen}
         className={`
-          fixed
-          inset-0
-          z-40
-
-          md:hidden
-
+          fixed inset-0 z-40 md:hidden
           bg-background
-
-          transition-all
-          duration-300
-          ease-out
-
+          transition-all duration-300 ease-out
           ${menuOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-4 pointer-events-none'}
         `}
       >
-        {/* Espacio del header */}
         <div className="h-16" />
 
         <div
           className="
-            container-biomey
-            pt-4
-            pb-8
-
+            container-biomey pt-4 pb-8
             h-[calc(100%-4rem)]
-
-            flex
-            flex-col
+            flex flex-col
           "
         >
-          {/* Navegación */}
           <nav className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                onClick={closeMenu}
+                onClick={handleNavClick(link.to)}
                 className="
-                  px-4
-                  py-4
-
-                  rounded-2xl
-
-                  text-lg
-                  font-medium
-                  text-foreground
-
-                  hover:bg-surface
-                  active:bg-surface
-
+                  px-4 py-4 rounded-2xl
+                  text-lg font-medium text-foreground
+                  hover:bg-surface active:bg-surface
                   transition-colors
                 "
               >
@@ -358,22 +309,12 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Separador */}
           <div className="h-px bg-border my-6" />
 
-          {/* Tema */}
           <div
             className="
-              flex
-              items-center
-              justify-between
-
-              px-4
-              py-3
-
-              rounded-2xl
-
-              bg-surface
+              flex items-center justify-between
+              px-4 py-3 rounded-2xl bg-surface
             "
           >
             <span className="text-sm font-medium text-muted">

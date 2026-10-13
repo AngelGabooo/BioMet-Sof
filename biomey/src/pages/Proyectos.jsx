@@ -24,9 +24,18 @@ function ArrowRight() {
   );
 }
 
-// 👇 Añadimos "App Móvil" a las categorías
-const CATEGORIES = ['Todos', 'Página Web', 'Sistema Web', 'Punto de Venta', 'E-commerce', 'Landing Page', 'App Móvil'];
+// 👇 Categorías (incluye "App Móvil")
+const CATEGORIES = [
+  'Todos',
+  'Página Web',
+  'Sistema Web',
+  'Punto de Venta',
+  'E-commerce',
+  'Landing Page',
+  'App Móvil',
+];
 
+/* ═══════════ TARJETA DE PROYECTO ═══════════ */
 function ProjectCard({ project }) {
   return (
     <article
@@ -81,6 +90,65 @@ function ProjectCard({ project }) {
   );
 }
 
+/* ═══════════ TARJETA "PRÓXIMAMENTE" ═══════════ */
+function ComingSoonCard() {
+  return (
+    <article
+      className="
+        group relative flex flex-col items-center justify-center text-center
+        min-h-[320px] h-full
+        bg-gradient-to-br from-surface via-surface to-accent/[0.06]
+        border-2 border-dashed border-border
+        rounded-2xl
+        p-8
+        transition-all duration-300
+        hover:border-accent/40 hover:from-surface hover:to-accent/[0.10]
+      "
+    >
+      {/* Ícono "+" pulsante */}
+      <span className="relative flex w-14 h-14 mb-5">
+        <span className="absolute inline-flex w-full h-full rounded-full bg-accent/20 opacity-75 animate-ping" />
+        <span className="relative inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 border border-accent/30">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-6 h-6 text-accent"
+          >
+            <path d="M12 2v20M2 12h20" />
+          </svg>
+        </span>
+      </span>
+
+      <h3 className="text-base md:text-lg font-bold tracking-tight mb-2">
+        Más proyectos en camino
+      </h3>
+
+      <p className="text-sm text-muted leading-relaxed max-w-xs mb-5">
+        Estamos trabajando en nuevos proyectos que pronto podrás ver aquí.
+        Vuelve pronto para descubrirlos.
+      </p>
+
+      {/* Chips decorativos */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border border-border text-[11px] font-medium text-muted">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent/60" />
+          En desarrollo
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border border-border text-[11px] font-medium text-muted">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent/60" />
+          Próximamente
+        </span>
+      </div>
+    </article>
+  );
+}
+
+/* ═══════════ PÁGINA PRINCIPAL ═══════════ */
 export default function Proyectos() {
   const [activeCategory, setActiveCategory] = useState('Todos');
 
@@ -91,6 +159,7 @@ export default function Proyectos() {
 
   return (
     <>
+      {/* ============ HERO ============ */}
       <section className="relative overflow-hidden pt-32 md:pt-40 pb-12 md:pb-16">
         <div className="absolute inset-0 -z-10 pointer-events-none">
           <div
@@ -124,6 +193,7 @@ export default function Proyectos() {
         </div>
       </section>
 
+      {/* ============ FILTROS ============ */}
       <section className="relative pb-8">
         <div className="container-biomey">
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -151,6 +221,7 @@ export default function Proyectos() {
         </div>
       </section>
 
+      {/* ============ GRID DE PROYECTOS ============ */}
       <section className="relative pb-20 md:pb-28">
         <div className="container-biomey">
           <p className="text-sm text-muted text-center mb-8">
@@ -166,6 +237,11 @@ export default function Proyectos() {
                   <ProjectCard project={project} />
                 </Reveal>
               ))}
+
+              {/* 👇 Tarjeta "Próximamente" siempre al final */}
+              <Reveal delay={filtered.length * 60}>
+                <ComingSoonCard />
+              </Reveal>
             </div>
           ) : (
             <p className="text-center text-muted py-12">
@@ -175,6 +251,7 @@ export default function Proyectos() {
         </div>
       </section>
 
+      {/* ============ CTA FINAL ============ */}
       <section className="relative pb-20 md:pb-28">
         <div className="container-biomey">
           <Reveal>

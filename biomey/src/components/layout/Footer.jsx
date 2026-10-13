@@ -55,21 +55,60 @@ function FacebookIcon({ className = 'w-4 h-4' }) {
   );
 }
 
-/* ═══════════ LOGO BIOMEY (Mismo diseño que el Header) ═══════════ */
+/* ═══════════ LOGO BIOMEY — Mismo diseño que el Header ═══════════ */
 function BioMeyLogo() {
   return (
     <div className="biomey-logo-mark">
-      {/* Imagen del logo */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Dirt&display=swap');
+
+        .biomey-footer-text {
+          font-family: 'Rubik Dirt', 'Impact', 'Arial Black', sans-serif;
+          font-weight: 400;
+          letter-spacing: 0.02em;
+          font-size: 1.4rem;
+          line-height: 1;
+          display: inline-flex;
+          align-items: baseline;
+        }
+
+        @media (min-width: 768px) {
+          .biomey-footer-text {
+            font-size: 1.65rem;
+          }
+        }
+
+        /* Parpadeo sutil, guiño al Loader */
+        @keyframes biomey-footer-flick {
+          0%, 100% { opacity: 1; }
+          45%      { opacity: 1; }
+          50%      { opacity: .88; }
+          55%      { opacity: 1; }
+        }
+
+        .biomey-footer-text > span {
+          display: inline-block;
+          animation: biomey-footer-flick 3.2s steps(1) infinite;
+        }
+
+        .biomey-footer-text > span:last-child {
+          animation-delay: 0.15s;
+        }
+      `}</style>
+
+      {/* ISOTIPO */}
       <div className="biomey-logo-icon">
-        <img 
-          src="/logo-biomey.png" 
-          alt="Logo BioMey" 
+        <img
+          src="/logo-biomey.png"
+          alt="Logo BioMey"
           className="w-full h-full object-contain dark:invert"
         />
       </div>
-      {/* Nombre con la fuente Bowlby One SC */}
-      <span className="biomey-logo-text">
-        BioMey
+
+      {/* WORDMARK con la misma fuente del Header */}
+      <span className="biomey-footer-text">
+        <span className="text-[#171717] dark:text-white">Bio</span>
+        <span className="text-[#2563EB] dark:text-[#60a5fa]">Mey</span>
       </span>
     </div>
   );
@@ -85,11 +124,11 @@ export default function Footer() {
 
         {/* Fila 1: Logo + Redes */}
         <div className="flex items-center justify-between gap-4 py-5 md:py-7">
-          
+
           {/* Logo actualizado */}
-          <Link 
-            to="/" 
-            className="biomey-logo-link group" 
+          <Link
+            to="/"
+            className="biomey-logo-link group"
             aria-label="BioMey - Inicio"
           >
             <BioMeyLogo />

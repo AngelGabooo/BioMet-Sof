@@ -50,14 +50,10 @@ const PeriodIcon = ({ period }) => {
 /* ------------------------------------------------------------------ */
 const LETTERS = ['B', 'I', 'O', 'M', 'E', 'Y'];
 
-// 👇 Duraciones reducidas para que se sienta RÁPIDO
-const FORM_MS = 2200;      // antes 3600 → ahora 2200 (más ágil)
-const LETTER_START = 100;  // antes 200
-const LETTER_MS = 1100;    // antes 1700 → más corto
-const STAGGER_MS = 130;    // antes 190 → menos espera entre letras
-
-const INK = '#171717';
-const BLUE = '#2563EB';
+const FORM_MS = 2200;
+const LETTER_START = 100;
+const LETTER_MS = 1100;
+const STAGGER_MS = 130;
 
 const STATUS = ['Iniciando', 'Cargando tu panel', 'Casi listo'];
 
@@ -76,14 +72,11 @@ const NODES = [
 
 const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
 
-/* ------------------------------------------------------------------ */
-/*  Detectar si es un dispositivo de gama baja / móvil                 */
-/* ------------------------------------------------------------------ */
 const isLowEndDevice = () => {
   if (typeof window === 'undefined') return false;
   const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   const cores = navigator.hardwareConcurrency || 4;
-  const memory = navigator.deviceMemory || 4; // GB (solo Chrome)
+  const memory = navigator.deviceMemory || 4;
   return isMobile || cores <= 4 || memory <= 2;
 };
 
@@ -93,9 +86,7 @@ export default function Loader() {
   const [percent, setPercent] = useState(0);
   const lowEnd = useRef(isLowEndDevice());
 
-  // Duración total: formación + saludo
   const hold = lowEnd.current ? 1400 : 1800;
-  const totalTime = FORM_MS + 300 + hold;
 
   /* Fases: forming → greeting */
   useEffect(() => {
@@ -106,9 +97,7 @@ export default function Loader() {
     return () => clearTimeout(t1);
   }, []);
 
-  /* Barra de progreso: usamos un intervalo con menos frecuencia
-     en lugar de requestAnimationFrame a 60fps.
-     En móvil: 15fps. En desktop: 30fps. Suficiente para que se vea fluido. */
+  /* Barra de progreso */
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setPercent(100);
@@ -134,29 +123,28 @@ export default function Loader() {
   const statusIdx = percent < 35 ? 0 : percent < 85 ? 1 : 2;
 
   return (
-    <div className="bm-root min-h-screen bg-white flex flex-col items-center justify-center
-                    relative overflow-hidden text-[#171717]">
-
-      {/* ========================================================= */}
-      {/*  CSS: optimizado para GPU y con menos efectos costosos    */}
-      {/* ========================================================= */}
+    <div className="
+      bm-root
+      min-h-screen
+      flex flex-col items-center justify-center
+      relative overflow-hidden
+      bg-background text-foreground
+    ">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rubik+Dirt&family=Inter:wght@400;500;600;700&display=swap');
 
-        .bm-root  {
+        .bm-root {
           font-family: 'Inter', system-ui, sans-serif;
-          /* Fuerza aceleración GPU en todo el contenedor */
           transform: translateZ(0);
           backface-visibility: hidden;
         }
+
         .bm-brush {
           font-family: 'Rubik Dirt', 'Impact', 'Arial Black', sans-serif;
           font-weight: 400;
         }
 
-        /* ---------- LETRAS: versión simplificada ---------- */
-        /* Antes usaba filter: blur() que es MUY caro en móvil.
-           Ahora solo usa transform + opacity, que son GPU-friendly. */
+        /* ---------- LETRAS ---------- */
         @keyframes bm-stamp {
           0%   { opacity: 0; transform: rotateY(1800deg) scale(2.4); }
           25%  { opacity: 1; }
@@ -179,7 +167,6 @@ export default function Loader() {
           animation: bm-stamp ${LETTER_MS}ms cubic-bezier(.25,.8,.25,1) both;
         }
 
-        /* Flicker: se mantiene porque es solo opacity, muy barato */
         @keyframes bm-flick {
           0%, 100% { opacity: 1; }
           45% { opacity: 1; } 50% { opacity: .35; } 55% { opacity: 1; }
@@ -211,7 +198,7 @@ export default function Loader() {
           to   { transform: translateX(100%); }
         }
         .bm-shimmer {
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
           animation: bm-shimmer 1.4s ease-in-out infinite;
         }
 
@@ -230,11 +217,11 @@ export default function Loader() {
         }
         .bm-pop { animation: bm-pop .7s ease-out both; }
 
-        /* ---------- MÓVIL: aún más ligero ---------- */
+        /* ---------- MÓVIL ---------- */
         @media (max-width: 640px) {
           .bm-letter { animation-duration: 900ms; }
-          .bm-shimmer { animation: none; }         /* quitamos shimmer en móvil */
-          .bm-node { animation: none; opacity: 1; }/* nodos estáticos */
+          .bm-shimmer { animation: none; }
+          .bm-node { animation: none; opacity: 1; }
           .bm-draw { animation-duration: 500ms; }
         }
 
@@ -246,17 +233,21 @@ export default function Loader() {
         }
       `}</style>
 
-      {/* Halos (blur-[120px] es caro en móvil, lo reducimos con media query) */}
-      <div className="pointer-events-none absolute -top-40 -left-24 w-[420px] h-[420px]
-                      rounded-full bg-[#2563EB]/[0.07] blur-[80px] sm:blur-[120px]" />
-      <div className="pointer-events-none absolute -bottom-40 -right-24 w-[480px] h-[480px]
-                      rounded-full bg-[#171717]/[0.06] blur-[90px] sm:blur-[140px]" />
+      {/* Halos decorativos (usan --accent del tema) */}
+      <div
+        className="pointer-events-none absolute -top-40 -left-24 w-[420px] h-[420px] rounded-full blur-[80px] sm:blur-[120px]"
+        style={{ background: 'rgb(var(--accent) / 0.07)' }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-40 -right-24 w-[480px] h-[480px] rounded-full blur-[90px] sm:blur-[140px]"
+        style={{ background: 'rgb(var(--foreground) / 0.05)' }}
+      />
 
-      {/* Grid de puntos: lo desactivamos en móvil con `hidden sm:block` para ahorrar repintado */}
+      {/* Grid de puntos (usa --foreground del tema) */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.07] hidden sm:block"
         style={{
-          backgroundImage: `radial-gradient(${INK} 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(rgb(var(--foreground)) 1px, transparent 1px)`,
           backgroundSize: '24px 24px',
         }}
       />
@@ -274,7 +265,10 @@ export default function Loader() {
               aria-hidden="true"
               className="bm-letter"
               style={{
-                color: i < 3 ? INK : BLUE,
+                color:
+                  i < 3
+                    ? 'rgb(var(--foreground))'
+                    : 'rgb(var(--accent))',
                 animationDelay: `${LETTER_START + i * STAGGER_MS}ms`,
               }}
             >
@@ -294,41 +288,66 @@ export default function Loader() {
           className="mt-5 w-[300px] sm:w-[380px] h-auto"
           fill="none"
           aria-hidden="true"
+          style={{ color: 'rgb(var(--foreground))' }}
         >
-          <g stroke={INK} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <g
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             {TRACES.map((d, i) => (
-              <path key={i} d={d} pathLength="1" className="bm-draw"
-                    style={{ '--d': `${1000 + i * 100}ms` }} />
+              <path
+                key={i}
+                d={d}
+                pathLength="1"
+                className="bm-draw"
+                style={{ '--d': `${1000 + i * 100}ms` }}
+              />
             ))}
           </g>
           {NODES.map(([x, y, blue], i) => (
-            <circle key={i} cx={x} cy={y} r="3.5"
-                    fill={blue ? BLUE : INK}
-                    className="bm-node"
-                    style={{ '--d': `${1500 + i * 100}ms` }} />
+            <circle
+              key={i}
+              cx={x}
+              cy={y}
+              r="3.5"
+              fill={blue ? 'rgb(var(--accent))' : 'currentColor'}
+              className="bm-node"
+              style={{ '--d': `${1500 + i * 100}ms` }}
+            />
           ))}
         </svg>
 
         {/* ============ BARRA / SALUDO ============ */}
-        <div className="relative mt-12 h-[96px] w-[280px] sm:w-[340px]" role="status" aria-live="polite">
+        <div
+          className="relative mt-12 h-[96px] w-[280px] sm:w-[340px]"
+          role="status"
+          aria-live="polite"
+        >
           <div
             className={`absolute inset-0 flex flex-col justify-center gap-3 transition-opacity duration-500
                         ${forming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           >
             <div className="flex items-baseline justify-between text-[13px]">
-              <span key={statusIdx} className="bm-swap font-medium text-[#171717]/70">
+              <span
+                key={statusIdx}
+                className="bm-swap font-medium text-muted"
+              >
                 {STATUS[statusIdx]}
               </span>
-              <span className="font-semibold tabular-nums text-[#171717]">{percent}%</span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {percent}%
+              </span>
             </div>
 
             <div className="relative" aria-hidden="true">
-              <div className="h-[6px] w-full rounded-full bg-[#171717]/[0.08] overflow-hidden">
+              <div className="h-[6px] w-full rounded-full bg-foreground/10 overflow-hidden">
                 <div
                   className="relative h-full rounded-full overflow-hidden"
                   style={{
                     width: `${percent}%`,
-                    background: `linear-gradient(90deg, ${INK} 0%, ${BLUE} 100%)`,
+                    background: `linear-gradient(90deg, rgb(var(--foreground)) 0%, rgb(var(--accent)) 100%)`,
                     transition: 'width 80ms linear',
                     willChange: 'width',
                   }}
@@ -341,17 +360,23 @@ export default function Loader() {
 
           {!forming && (
             <div className="bm-pop absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
-              <span className="text-[#2563EB]">
+              <span className="text-accent">
                 <PeriodIcon period={greeting.period} />
               </span>
-              <p className="bm-brush text-[34px] leading-none tracking-wide">{greeting.text}</p>
-              <p className="text-[14px] text-[#171717]/60">Te damos la bienvenida a BioMey</p>
+              <p className="bm-brush text-[34px] leading-none tracking-wide text-foreground">
+                {greeting.text}
+              </p>
+              <p className="text-[14px] text-muted">
+                Te damos la bienvenida a BioMey
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      <p className="absolute bottom-8 text-[12px] text-[#171717]/40">© 2025 BioMey</p>
+      <p className="absolute bottom-8 text-[12px] text-muted">
+        © 2025 BioMey
+      </p>
     </div>
   );
 }

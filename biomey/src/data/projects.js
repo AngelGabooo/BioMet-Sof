@@ -23,7 +23,7 @@ export const PROJECTS = [
     id: 2,
     name: 'Sistema para Gimnasio',
     category: CATEGORIES.SYSTEM,
-    location: 'Tuxtla Gutierrez, Chiapas',
+    location: 'Villa Comaltitlan, Chiapas',
     description:
       'Control de miembros, pagos, asistencia y rutinas desde una sola plataforma.',
     image: '/img/projects/gym-1.png',
@@ -70,7 +70,7 @@ export const PROJECTS = [
     category: CATEGORIES.MOBILE,
     location: 'Monterrey, Nuevo León',
     description:
-      'Plataforma para reporte y seguimiento de incidentes viales en tiempo real.',
+      'Participacion en Plataforma para reporte y seguimiento de incidentes viales en tiempo real.',
     image: '/img/projects/vial.png',
   },
   // 👇 NUEVO PROYECTO: KaapTerra
@@ -80,7 +80,7 @@ export const PROJECTS = [
     category: CATEGORIES.MOBILE,
     location: 'Chiapas, México',
     description:
-      'App móvil para monitorear el desempeño del café, cuidar los terrenos y comercializar lotes con trazabilidad total. Incluye mapas GPS, bitácora de cultivo, historial completo y conexión directa entre compradores y vendedores.',
+      'Participacion en App móvil para monitorear el desempeño del café, cuidar los terrenos y comercializar lotes con trazabilidad total. Incluye mapas GPS, bitácora de cultivo, historial completo y conexión directa entre compradores y vendedores.',
     image: '/img/projects/kaapterra.png', // Asegúrate de guardar la imagen con este nombre
   },
 ];

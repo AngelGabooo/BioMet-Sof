@@ -1,94 +1,88 @@
-import { useEffect, useRef, useState } from 'react';
 import Reveal from '../ui/Reveal';
 
-/* ═══════════ HOOK: contar al entrar en viewport ═══════════ */
-function useCountUp(end, duration = 2000, start = 0) {
-  const [count, setCount] = useState(start);
-  const [started, setStarted] = useState(false);
-  const ref = useRef(null);
+/* ═══════════ TECNOLOGÍAS ═══════════ */
+const TECHS = [
+  'React', 'Node.js', 'Tailwind CSS', 'PostgreSQL',
+  'JavaScript', 'TypeScript', 'MySQL', 'MongoDB',
+  'Express', 'Vite', 'Git', 'Figma',
+];
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started) {
-          setStarted(true);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [started]);
-
-  useEffect(() => {
-    if (!started) return;
-    let raf;
-    const startTime = performance.now();
-
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(2, -10 * progress);
-      setCount(Math.floor(start + (end - start) * eased));
-      if (progress < 1) raf = requestAnimationFrame(tick);
-      else setCount(end);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [started, end, duration, start]);
-
-  return { count, ref };
-}
-
-/* ═══════════ COMPONENTE STAT ITEM ═══════════ */
-function StatItem({ value, suffix, prefix, label, delay }) {
-  const numericValue = parseInt(value, 10);
-  const { count, ref } = useCountUp(numericValue, 1800 + delay);
-
+function TechChip({ name }) {
   return (
-    <div ref={ref} className="text-center">
-      <div className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-1">
-        {prefix}
-        {count}
-        {suffix}
-      </div>
-      <div className="text-xs sm:text-sm text-muted leading-tight">
-        {label}
-      </div>
-    </div>
+    <span className="
+      inline-flex items-center gap-2
+      px-4 py-2.5 rounded-full
+      bg-background border border-border
+      text-sm font-medium text-foreground
+      whitespace-nowrap
+      transition-colors duration-200
+      hover:border-accent/40 hover:text-accent
+    ">
+      <span className="w-1.5 h-1.5 rounded-full bg-accent/60" />
+      {name}
+    </span>
   );
 }
 
-/* ═══════════ DATOS ═══════════ */
-const STATS = [
-  { value: 50, prefix: '+', suffix: '', label: 'Proyectos entregados', delay: 0 },
-  { value: 30, prefix: '+', suffix: '', label: 'Clientes satisfechos', delay: 100 },
-  { value: 5, prefix: '', suffix: ' años', label: 'De experiencia', delay: 200 },
-  { value: 24, prefix: '', suffix: '/7', label: 'Soporte disponible', delay: 300 },
-];
+function MarqueeRow({ hidden = false }) {
+  return (
+    <ul
+      className="flex shrink-0 items-center gap-3 pr-3"
+      aria-hidden={hidden || undefined}
+    >
+      {TECHS.map((t) => (
+        <li key={t}>
+          <TechChip name={t} />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-/* ═══════════ SECCIÓN ═══════════ */
 export default function Stats() {
   return (
-    <section className="relative py-14 md:py-20 border-y border-border bg-surface">
-      <div className="container-biomey">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
-          {STATS.map((stat, i) => (
-            <Reveal key={i} delay={i * 100}>
-              <StatItem
-                value={stat.value}
-                prefix={stat.prefix}
-                suffix={stat.suffix}
-                label={stat.label}
-                delay={stat.delay}
-              />
-            </Reveal>
-          ))}
+    <section className="relative py-14 md:py-20 border-y border-border bg-surface overflow-hidden">
+      <style>{`
+        @keyframes tech-marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .tech-marquee {
+          animation: tech-marquee 40s linear infinite;
+          will-change: transform;
+        }
+        .tech-marquee:hover { animation-play-state: paused; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .tech-marquee { animation: none; }
+        }
+      `}</style>
+
+      <div className="container-biomey mb-8 md:mb-10">
+        <Reveal>
+          <div className="text-center">
+            <span className="
+              inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+              bg-background border border-accent/20
+              text-xs font-semibold text-foreground
+            ">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+              Tecnologías que dominamos
+            </span>
+          </div>
+        </Reveal>
+      </div>
+
+      {/* Franja infinita */}
+      <div
+        className="
+          overflow-hidden
+          [mask-image:linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)]
+        "
+      >
+        <div className="tech-marquee flex w-max">
+          <MarqueeRow />
+          <MarqueeRow hidden />
         </div>
       </div>
     </section>
