@@ -11,24 +11,62 @@ const NAV_LINKS = [
 ];
 
 /* =========================================================
-   LOGO BIOMEY
+   LOGO BIOMEY — Estilo unificado con el Loader
    ========================================================= */
 
 function BioMeyLogo() {
   return (
     <div className="biomey-logo-mark">
-      {/* IMAGEN DEL LOGO */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Dirt&display=swap');
+
+        .biomey-header-text {
+          font-family: 'Rubik Dirt', 'Impact', 'Arial Black', sans-serif;
+          font-weight: 400;
+          letter-spacing: 0.02em;
+          font-size: 1.4rem;
+          line-height: 1;
+          display: inline-flex;
+          align-items: baseline;
+        }
+
+        @media (min-width: 768px) {
+          .biomey-header-text {
+            font-size: 1.65rem;
+          }
+        }
+
+        /* Parpadeo sutil, guiño al Loader */
+        @keyframes biomey-header-flick {
+          0%, 100% { opacity: 1; }
+          45%      { opacity: 1; }
+          50%      { opacity: .88; }
+          55%      { opacity: 1; }
+        }
+
+        .biomey-header-text > span {
+          display: inline-block;
+          animation: biomey-header-flick 3.2s steps(1) infinite;
+        }
+
+        .biomey-header-text > span:last-child {
+          animation-delay: 0.15s;
+        }
+      `}</style>
+
+      {/* ISOTIPO */}
       <div className="biomey-logo-icon">
-        <img 
-          src="/logo-biomey.png" 
-          alt="Logo BioMey" 
+        <img
+          src="/logo-biomey.png"
+          alt="Logo BioMey"
           className="w-full h-full object-contain dark:invert"
         />
       </div>
 
-      {/* NOMBRE */}
-      <span className="biomey-logo-text">
-        BioMey
+      {/* WORDMARK con la fuente del Loader */}
+      <span className="biomey-header-text">
+        <span className="text-[#171717] dark:text-white">Bio</span>
+        <span className="text-[#2563EB] dark:text-[#60a5fa]">Mey</span>
       </span>
     </div>
   );
@@ -40,7 +78,7 @@ function BioMeyLogo() {
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false); // 👈 Nuevo estado para ocultar
+  const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   /* Detectar scroll: ocultar al bajar, mostrar al subir */
@@ -50,15 +88,11 @@ export default function Header() {
     const onScroll = () => {
       const currentScrollY = window.scrollY;
 
-      // Actualizamos el estado "scrolled" (para el fondo del header)
       setScrolled(currentScrollY > 8);
 
-      // Lógica para ocultar/mostrar
       if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        // Bajando y pasamos los 80px → ocultamos
         setHidden(true);
       } else {
-        // Subiendo → mostramos
         setHidden(false);
       }
 
