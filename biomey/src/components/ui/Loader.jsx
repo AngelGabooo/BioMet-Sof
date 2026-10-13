@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Saludo según la hora                                              */
@@ -51,25 +50,23 @@ const PeriodIcon = ({ period }) => {
 /* ------------------------------------------------------------------ */
 const LETTERS = ['B', 'I', 'O', 'M', 'E', 'Y'];
 
-const FORM_MS = 3600;      // duración total de la carga
-const LETTER_START = 200;  // cuándo cae la primera letra
-const LETTER_MS = 1700;    // duración del giro de cada letra (5 vueltas)
-const STAGGER_MS = 190;    // espera entre letras
+// 👇 Duraciones reducidas para que se sienta RÁPIDO
+const FORM_MS = 2200;      // antes 3600 → ahora 2200 (más ágil)
+const LETTER_START = 100;  // antes 200
+const LETTER_MS = 1100;    // antes 1700 → más corto
+const STAGGER_MS = 130;    // antes 190 → menos espera entre letras
 
 const INK = '#171717';
 const BLUE = '#2563EB';
 
-// Estados del cargador según el progreso
 const STATUS = ['Iniciando', 'Cargando tu panel', 'Casi listo'];
 
-// Trazos de circuito bajo la palabra (guiño al logo)
 const TRACES = [
   'M146 8 H96 L86 2 H30',
   'M146 14 H120 L110 19 H70',
   'M154 8 H204 L214 2 H270',
   'M154 14 H180 L190 19 H230',
 ];
-// [x, y, azul?]
 const NODES = [
   [30, 2, true],
   [70, 19, false],
@@ -79,159 +76,185 @@ const NODES = [
 
 const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
 
-// NOTA: El componente ahora se llama `Loader` en lugar de `Splash`.
+/* ------------------------------------------------------------------ */
+/*  Detectar si es un dispositivo de gama baja / móvil                 */
+/* ------------------------------------------------------------------ */
+const isLowEndDevice = () => {
+  if (typeof window === 'undefined') return false;
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const cores = navigator.hardwareConcurrency || 4;
+  const memory = navigator.deviceMemory || 4; // GB (solo Chrome)
+  return isMobile || cores <= 4 || memory <= 2;
+};
+
 export default function Loader() {
-  const navigate = useNavigate();
-  const [phase, setPhase] = useState('forming'); // 'forming' | 'greeting'
+  const [phase, setPhase] = useState('forming');
   const [greeting] = useState(getGreeting);
-  const [p, setP] = useState(0); // progreso 0..1
+  const [percent, setPercent] = useState(0);
+  const lowEnd = useRef(isLowEndDevice());
 
-  // La duración ahora es fija, ya que no viene por props.
-  const formTime = FORM_MS + 300;
-  const hold = 2000; // Tiempo que se muestra el saludo
+  // Duración total: formación + saludo
+  const hold = lowEnd.current ? 1400 : 1800;
+  const totalTime = FORM_MS + 300 + hold;
 
+  /* Fases: forming → greeting */
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const formTime = reduce ? 0 : FORM_MS + 300;
 
     const t1 = setTimeout(() => setPhase('greeting'), formTime);
-    // El `navigate` ahora se maneja desde el Layout, no desde aquí.
-    // const t2 = setTimeout(() => navigate(to, { replace: true }), formTime + hold);
-    
-    // La animación de salida se manejará en el Layout.
-    const t2 = setTimeout(() => setPhase('finished'), formTime + hold);
+    return () => clearTimeout(t1);
+  }, []);
 
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [hold]);
-
-  // Progreso de la barra
+  /* Barra de progreso: usamos un intervalo con menos frecuencia
+     en lugar de requestAnimationFrame a 60fps.
+     En móvil: 15fps. En desktop: 30fps. Suficiente para que se vea fluido. */
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setP(1);
+      setPercent(100);
       return;
     }
-    let raf;
+
+    const fps = lowEnd.current ? 15 : 30;
+    const intervalMs = 1000 / fps;
     const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / FORM_MS);
-      setP(easeInOutSine(t));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    const id = setInterval(() => {
+      const elapsed = performance.now() - start;
+      const t = Math.min(1, elapsed / FORM_MS);
+      const eased = easeInOutSine(t);
+      setPercent(Math.round(eased * 100));
+      if (t >= 1) clearInterval(id);
+    }, intervalMs);
+
+    return () => clearInterval(id);
   }, []);
 
   const forming = phase === 'forming';
-  const percent = Math.round(p * 100);
-  const statusIdx = p < 0.35 ? 0 : p < 0.85 ? 1 : 2;
+  const statusIdx = percent < 35 ? 0 : percent < 85 ? 1 : 2;
 
   return (
     <div className="bm-root min-h-screen bg-white flex flex-col items-center justify-center
                     relative overflow-hidden text-[#171717]">
+
+      {/* ========================================================= */}
+      {/*  CSS: optimizado para GPU y con menos efectos costosos    */}
+      {/* ========================================================= */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rubik+Dirt&family=Inter:wght@400;500;600;700&display=swap');
 
-        .bm-root  { font-family: 'Inter', system-ui, sans-serif; }
-        .bm-brush { font-family: 'Rubik Dirt', 'Impact', 'Arial Black', sans-serif; font-weight: 400; }
+        .bm-root  {
+          font-family: 'Inter', system-ui, sans-serif;
+          /* Fuerza aceleración GPU en todo el contenedor */
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+        .bm-brush {
+          font-family: 'Rubik Dirt', 'Impact', 'Arial Black', sans-serif;
+          font-weight: 400;
+        }
 
+        /* ---------- LETRAS: versión simplificada ---------- */
+        /* Antes usaba filter: blur() que es MUY caro en móvil.
+           Ahora solo usa transform + opacity, que son GPU-friendly. */
         @keyframes bm-stamp {
-          0%   { opacity: 0; transform: rotateY(1800deg) rotate(-180deg) scale(2.6); filter: blur(12px); }
+          0%   { opacity: 0; transform: rotateY(1800deg) scale(2.4); }
           25%  { opacity: 1; }
           30%  { opacity: .2; }
           36%  { opacity: 1; }
           42%  { opacity: .3; }
           48%  { opacity: 1; }
-          75%  { transform: rotateY(60deg) rotate(-20deg) scale(1.15); filter: blur(1px); }
+          75%  { transform: rotateY(60deg) scale(1.1); }
           88%  { opacity: 1; }
           91%  { opacity: .25; }
           94%  { opacity: 1; }
-          100% { opacity: 1; transform: rotateY(0deg) rotate(0deg) scale(1); filter: blur(0); }
+          100% { opacity: 1; transform: rotateY(0deg) scale(1); }
         }
         .bm-letter {
           display: inline-block;
           opacity: 0;
-          will-change: transform, opacity, filter;
+          will-change: transform, opacity;
+          transform: translateZ(0);
+          backface-visibility: hidden;
           animation: bm-stamp ${LETTER_MS}ms cubic-bezier(.25,.8,.25,1) both;
         }
 
+        /* Flicker: se mantiene porque es solo opacity, muy barato */
         @keyframes bm-flick {
           0%, 100% { opacity: 1; }
-          45% { opacity: 1; } 50% { opacity: .3; } 55% { opacity: 1; } 70% { opacity: .65; } 75% { opacity: 1; }
+          45% { opacity: 1; } 50% { opacity: .35; } 55% { opacity: 1; }
         }
-        .bm-flick { animation: bm-flick 1.6s steps(1) infinite; }
-        .bm-glow  { display: inline-block; animation: bm-flick 2.4s steps(1) infinite; }
+        .bm-glow { display: inline-block; animation: bm-flick 2.4s steps(1) infinite; }
 
+        /* ---------- CIRCUITO ---------- */
         @keyframes bm-draw { to { stroke-dashoffset: 0; } }
         .bm-draw {
           stroke-dasharray: 1 1;
           stroke-dashoffset: 1;
-          animation: bm-draw 800ms ease-out forwards;
+          animation: bm-draw 700ms ease-out forwards;
           animation-delay: var(--d);
         }
         @keyframes bm-nodeblink {
-          0%, 55%   { opacity: 1; }
-          56%, 70%  { opacity: .1; }
-          71%, 80%  { opacity: 1; }
-          81%, 90%  { opacity: .1; }
-          91%, 100% { opacity: 1; }
+          0%, 60%   { opacity: 1; }
+          61%, 80%  { opacity: .15; }
+          81%, 100% { opacity: 1; }
         }
         .bm-node {
           opacity: 0;
-          animation: bm-nodeblink 1.3s steps(1) infinite;
+          animation: bm-nodeblink 1.4s steps(1) infinite;
           animation-delay: var(--d);
         }
 
+        /* ---------- BARRA ---------- */
         @keyframes bm-shimmer {
           from { transform: translateX(-100%); }
           to   { transform: translateX(100%); }
         }
         .bm-shimmer {
           background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
-          animation: bm-shimmer 1.1s ease-in-out infinite;
+          animation: bm-shimmer 1.4s ease-in-out infinite;
         }
-        @keyframes bm-tick {
-          0%, 100% { opacity: 1; box-shadow: 0 0 14px 2px rgba(37,99,235,.7); }
-          50%      { opacity: .35; box-shadow: 0 0 6px 0 rgba(37,99,235,.35); }
-        }
-        .bm-tick { animation: bm-tick .9s steps(2) infinite; }
 
         @keyframes bm-swap {
           0%   { opacity: 0; transform: translateY(4px); }
-          30%  { opacity: 1; }
-          40%  { opacity: .3; }
-          55%  { opacity: 1; transform: none; }
+          40%  { opacity: 1; transform: none; }
           100% { opacity: 1; transform: none; }
         }
-        .bm-swap { animation: bm-swap .5s ease-out both; }
+        .bm-swap { animation: bm-swap .4s ease-out both; }
 
         @keyframes bm-pop {
-          0%   { opacity: 0; transform: scale(.92); }
-          20%  { opacity: 1; }
-          30%  { opacity: .2; }
+          0%   { opacity: 0; transform: scale(.94); }
           40%  { opacity: 1; }
-          50%  { opacity: .5; }
           60%  { opacity: 1; transform: scale(1); }
           100% { opacity: 1; transform: scale(1); }
         }
-        .bm-pop { animation: bm-pop .9s ease-out both; }
+        .bm-pop { animation: bm-pop .7s ease-out both; }
+
+        /* ---------- MÓVIL: aún más ligero ---------- */
+        @media (max-width: 640px) {
+          .bm-letter { animation-duration: 900ms; }
+          .bm-shimmer { animation: none; }         /* quitamos shimmer en móvil */
+          .bm-node { animation: none; opacity: 1; }/* nodos estáticos */
+          .bm-draw { animation-duration: 500ms; }
+        }
 
         @media (prefers-reduced-motion: reduce) {
           .bm-letter { animation: none; opacity: 1; }
-          .bm-flick, .bm-glow, .bm-shimmer, .bm-tick, .bm-swap, .bm-pop { animation: none; }
+          .bm-flick, .bm-glow, .bm-shimmer, .bm-swap, .bm-pop { animation: none; }
           .bm-node { animation: none; opacity: 1; }
           .bm-draw { animation: none; stroke-dashoffset: 0; }
         }
       `}</style>
 
+      {/* Halos (blur-[120px] es caro en móvil, lo reducimos con media query) */}
       <div className="pointer-events-none absolute -top-40 -left-24 w-[420px] h-[420px]
-                      rounded-full bg-[#2563EB]/[0.07] blur-[120px]" />
+                      rounded-full bg-[#2563EB]/[0.07] blur-[80px] sm:blur-[120px]" />
       <div className="pointer-events-none absolute -bottom-40 -right-24 w-[480px] h-[480px]
-                      rounded-full bg-[#171717]/[0.06] blur-[140px]" />
+                      rounded-full bg-[#171717]/[0.06] blur-[90px] sm:blur-[140px]" />
+
+      {/* Grid de puntos: lo desactivamos en móvil con `hidden sm:block` para ahorrar repintado */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.07] hidden sm:block"
         style={{
           backgroundImage: `radial-gradient(${INK} 1px, transparent 1px)`,
           backgroundSize: '24px 24px',
@@ -239,10 +262,11 @@ export default function Loader() {
       />
 
       <div className="relative flex flex-col items-center px-6">
+        {/* ============ PALABRA BIOMEY ============ */}
         <h1
           aria-label="BioMey"
           className="bm-brush relative flex text-[72px] sm:text-[120px] leading-none tracking-[0.02em]"
-          style={{ perspective: '800px' }}
+          style={{ perspective: '800px', transform: 'translateZ(0)' }}
         >
           {LETTERS.map((c, i) => (
             <span
@@ -256,7 +280,7 @@ export default function Loader() {
             >
               <span
                 className="bm-glow"
-                style={{ animationDelay: `${LETTER_START + i * STAGGER_MS + LETTER_MS + 300}ms` }}
+                style={{ animationDelay: `${LETTER_START + i * STAGGER_MS + LETTER_MS + 200}ms` }}
               >
                 {c}
               </span>
@@ -264,6 +288,7 @@ export default function Loader() {
           ))}
         </h1>
 
+        {/* Circuito */}
         <svg
           viewBox="0 0 300 24"
           className="mt-5 w-[300px] sm:w-[380px] h-auto"
@@ -273,17 +298,18 @@ export default function Loader() {
           <g stroke={INK} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             {TRACES.map((d, i) => (
               <path key={i} d={d} pathLength="1" className="bm-draw"
-                    style={{ '--d': `${1500 + i * 150}ms` }} />
+                    style={{ '--d': `${1000 + i * 100}ms` }} />
             ))}
           </g>
           {NODES.map(([x, y, blue], i) => (
             <circle key={i} cx={x} cy={y} r="3.5"
                     fill={blue ? BLUE : INK}
                     className="bm-node"
-                    style={{ '--d': `${2200 + i * 150}ms` }} />
+                    style={{ '--d': `${1500 + i * 100}ms` }} />
           ))}
         </svg>
 
+        {/* ============ BARRA / SALUDO ============ */}
         <div className="relative mt-12 h-[96px] w-[280px] sm:w-[340px]" role="status" aria-live="polite">
           <div
             className={`absolute inset-0 flex flex-col justify-center gap-3 transition-opacity duration-500
@@ -301,23 +327,21 @@ export default function Loader() {
                 <div
                   className="relative h-full rounded-full overflow-hidden"
                   style={{
-                    width: `${p * 100}%`,
+                    width: `${percent}%`,
                     background: `linear-gradient(90deg, ${INK} 0%, ${BLUE} 100%)`,
+                    transition: 'width 80ms linear',
+                    willChange: 'width',
                   }}
                 >
                   <span className="bm-shimmer absolute inset-0" />
                 </div>
               </div>
-              <span
-                className="bm-tick absolute top-1/2 -translate-y-1/2 block h-[14px] w-[3px] rounded-full bg-[#2563EB]"
-                style={{ left: `calc(${p * 100}% - 1.5px)`, opacity: p > 0.01 && p < 1 ? undefined : 0 }}
-              />
             </div>
           </div>
 
           {!forming && (
             <div className="bm-pop absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
-              <span className="text-[#2563EB] bm-flick">
+              <span className="text-[#2563EB]">
                 <PeriodIcon period={greeting.period} />
               </span>
               <p className="bm-brush text-[34px] leading-none tracking-wide">{greeting.text}</p>

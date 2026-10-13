@@ -58,23 +58,29 @@ const LockIcon = () => (
 /* ═══════════ TYPEWRITER (cicla palabras) ═══════════ */
 const WORDS = ['hacer crecer', 'digitalizar', 'automatizar', 'impulsar'];
 
-function Typewriter({ words, delay = 0, speed = 70, deleteSpeed = 35, pause = 1700 }) {
+function Typewriter({
+  words,
+  delay = 0,
+  speed = 55,
+  deleteSpeed = 28,
+  pause = 1600,
+}) {
   const [reduce] = useState(
-    () => typeof window !== 'undefined' &&
-          window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] = useState(delay === 0);
   const [wi, setWi] = useState(0);
   const [text, setText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  // Esperar el delay inicial (para que el loader termine)
   useEffect(() => {
+    if (delay === 0) return undefined;
     const t = setTimeout(() => setStarted(true), delay);
     return () => clearTimeout(t);
   }, [delay]);
 
-  // Escribir y borrar
   useEffect(() => {
     if (!started || reduce) return undefined;
     const word = words[wi];
@@ -87,7 +93,12 @@ function Typewriter({ words, delay = 0, speed = 70, deleteSpeed = 35, pause = 17
       setWi((i) => (i + 1) % words.length);
     } else {
       t = setTimeout(
-        () => setText(deleting ? word.slice(0, text.length - 1) : word.slice(0, text.length + 1)),
+        () =>
+          setText(
+            deleting
+              ? word.slice(0, text.length - 1)
+              : word.slice(0, text.length + 1)
+          ),
         deleting ? deleteSpeed : speed
       );
     }
@@ -95,12 +106,15 @@ function Typewriter({ words, delay = 0, speed = 70, deleteSpeed = 35, pause = 17
   }, [started, reduce, words, wi, text, deleting, speed, deleteSpeed, pause]);
 
   return (
-    <span className="inline">
+    <span
+      className="inline"
+      style={{ willChange: 'contents', transform: 'translateZ(0)' }}
+    >
       {reduce ? words[0] : text}
       <span
         className="
           inline-block w-[3px] h-[0.85em] bg-accent ml-1 align-middle rounded-full
-          animate-[blink_0.8s_ease-in-out_infinite]
+          animate-blink
         "
         aria-hidden="true"
       />
@@ -157,12 +171,10 @@ function Mockup() {
       onMouseMove={onMove}
       onMouseLeave={onLeave}
     >
-      {/* Brillo detrás */}
       <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-accent/10 blur-3xl" aria-hidden="true" />
 
       <div ref={tiltRef} className="relative" style={{ transformStyle: 'preserve-3d' }}>
         <div className="rounded-2xl border border-border bg-surface shadow-glow overflow-hidden">
-          {/* Barra del navegador */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background/60">
             <div className="flex gap-1.5" aria-hidden="true">
               <span className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
@@ -175,9 +187,7 @@ function Mockup() {
             </div>
           </div>
 
-          {/* Contenido */}
           <div className="p-4 sm:p-5 space-y-4">
-            {/* Web en esqueleto */}
             <div className="grid grid-cols-5 gap-4">
               <div className="col-span-3 space-y-2.5 pt-1">
                 <div className="h-2 w-14 rounded-full bg-accent/40" />
@@ -198,7 +208,6 @@ function Mockup() {
               </div>
             </div>
 
-            {/* Gráfico */}
             <div className="rounded-xl border border-border bg-background/70 p-3.5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-semibold text-foreground">Rendimiento</span>
@@ -220,12 +229,10 @@ function Mockup() {
           </div>
         </div>
 
-        {/* Chips flotantes */}
         <Chip icon={<GlobeIcon />} label="Páginas web" className="-top-4 -left-1 sm:-left-8" delay="0s" />
         <Chip icon={<CartIcon />} label="Tienda en línea" className="top-1/3 -right-1 sm:-right-9" delay="1.5s" />
         <Chip icon={<BoltIcon />} label="Sistemas a medida" className="-bottom-4 left-2 sm:-left-6" delay="3s" />
 
-        {/* Aviso tipo notificación */}
         <div className="absolute z-20 -bottom-7 right-2 sm:-right-4 animate-float hidden sm:block" style={{ animationDelay: '2.2s' }}>
           <div className="flex items-center gap-2.5 rounded-xl border border-border bg-surface/90 backdrop-blur pl-2.5 pr-3.5 py-2 shadow-soft">
             <span className="relative grid place-items-center w-7 h-7 rounded-lg bg-green-500/10 text-green-600">
@@ -273,7 +280,6 @@ function MarqueeGroup({ hidden = false }) {
 export default function Hero() {
   const spotRef = useRef(null);
 
-  // Luz suave que sigue al mouse (solo escritorio)
   const onMove = (e) => {
     const el = spotRef.current;
     if (!el) return;
@@ -292,21 +298,29 @@ export default function Hero() {
         .hx-bar { transform-origin: bottom; transform: scaleY(0); animation: hx-bar .8s cubic-bezier(.2,.8,.2,1) forwards; }
 
         @keyframes hx-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .hx-marquee { animation: hx-marquee 32s linear infinite; }
+        .hx-marquee { animation: hx-marquee 32s linear infinite; will-change: transform; }
         .hx-marquee:hover { animation-play-state: paused; }
 
         @keyframes hx-shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
         .hx-shine { animation: hx-shine 3.6s ease-in-out infinite; }
 
+        /* 👇 Cursor del typewriter */
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .animate-blink {
+          animation: blink 1s step-end infinite;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .hx-bar { animation: none; transform: scaleY(1); }
-          .hx-marquee, .hx-shine { animation: none; }
+          .hx-marquee, .hx-shine, .animate-blink { animation: none; }
         }
       `}</style>
 
-      {/* 🎨 Fondo decorativo con Blobs Animados */}
+      {/* 🎨 Fondo decorativo */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        {/* Grid sutil */}
         <div
           className="
             absolute inset-0
@@ -316,19 +330,15 @@ export default function Hero() {
             opacity-50
           "
         />
-        {/* Blob azul superior animado */}
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[520px] h-[520px] bg-accent/10 rounded-full blur-3xl animate-float" />
-        {/* Blob secundario animado */}
         <div
           className="absolute top-40 -right-32 w-[320px] h-[320px] bg-accent/5 rounded-full blur-3xl animate-float"
           style={{ animationDelay: '2s' }}
         />
-        {/* Blob inferior izquierdo animado */}
         <div
           className="absolute bottom-0 -left-32 w-[280px] h-[280px] bg-accent/5 rounded-full blur-3xl animate-float"
           style={{ animationDelay: '4s' }}
         />
-        {/* Luz que sigue al mouse */}
         <div
           ref={spotRef}
           className="hidden md:block absolute top-0 left-0 w-[420px] h-[420px] rounded-full bg-accent/10 blur-3xl transition-transform duration-500 ease-out"
@@ -341,7 +351,6 @@ export default function Hero() {
           {/* ============ TEXTO ============ */}
           <div className="text-center lg:text-left">
 
-            {/* Badge */}
             <div className="animate-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface/80 backdrop-blur-sm border border-accent/20 shadow-lg shadow-accent/5 mb-7">
               <span className="relative flex w-2 h-2">
                 <span className="absolute inline-flex w-full h-full rounded-full bg-green-500 opacity-75 animate-ping" />
@@ -352,31 +361,29 @@ export default function Hero() {
               </span>
             </div>
 
-            {/* Título con typewriter (3 líneas fijas para que nada salte) */}
+            {/* Título con typewriter — SIN delay para que arranque al instante */}
             <h1
               className="animate-fade-up text-[2.6rem] sm:text-6xl lg:text-[4.1rem] font-bold tracking-tight leading-[1.05] mb-6"
-              style={{ animationDelay: '80ms' }}
+              style={{ animationDelay: '40ms', transform: 'translateZ(0)' }}
             >
               <span className="block">Soluciones digitales para</span>
               <span className="block min-h-[1.1em] bg-gradient-to-r from-accent to-accent/60 bg-clip-text text-transparent">
-                <Typewriter words={WORDS} delay={1500} speed={70} />
+                <Typewriter words={WORDS} delay={0} speed={55} />
               </span>
               <span className="block">tu negocio</span>
             </h1>
 
-            {/* Subtítulo */}
             <p
               className="animate-fade-up text-base md:text-lg text-muted leading-relaxed max-w-xl mx-auto lg:mx-0 mb-9"
-              style={{ animationDelay: '160ms' }}
+              style={{ animationDelay: '80ms' }}
             >
               Desarrollamos páginas web, sistemas, tiendas en línea y soluciones
               tecnológicas adaptadas a las necesidades de tu negocio.
             </p>
 
-            {/* Botones */}
             <div
               className="animate-fade-up flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-10"
-              style={{ animationDelay: '240ms' }}
+              style={{ animationDelay: '120ms' }}
             >
               <a
                 href={getWhatsAppLink('Hola BioMey 👋, quiero solicitar una cotización para un proyecto.')}
@@ -394,7 +401,6 @@ export default function Hero() {
                   active:scale-[0.98]
                 "
               >
-                {/* Destello automático */}
                 <span className="hx-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent" aria-hidden="true" />
                 <span className="relative z-10">Solicitar cotización</span>
                 <span className="relative z-10"><ArrowRight /></span>
@@ -420,10 +426,9 @@ export default function Hero() {
               </a>
             </div>
 
-            {/* Features */}
             <div
               className="animate-fade-up flex flex-wrap items-center justify-center lg:justify-start gap-2.5"
-              style={{ animationDelay: '320ms' }}
+              style={{ animationDelay: '160ms' }}
             >
               {['Desarrollo a medida', 'Sistemas en línea', 'Soporte continuo'].map((f) => (
                 <span
@@ -438,7 +443,7 @@ export default function Hero() {
           </div>
 
           {/* ============ VISUAL ============ */}
-          <div className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+          <div className="animate-fade-up" style={{ animationDelay: '100ms' }}>
             <Mockup />
           </div>
         </div>
